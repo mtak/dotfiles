@@ -241,6 +241,17 @@ All branches must follow these conventions:
 - `docs/adr-0007` — Document new architectural decision
 - `chore/update-dependencies` — Dependency updates
 
+**Permitted characters**: a branch name must match
+`[a-zA-Z0-9][a-zA-Z0-9._/+=-]*`. In particular, **never put `#` in a branch
+name** — `fix/#123-thing` is not a valid reading of `fix/xxxxx`. For an
+issue-linked branch, drop the `#`: `fix/123-headline-h2-close-tag`.
+
+Why it matters: preview-deploy systems derive the environment name from the
+branch. Cloudflare Workers rejects `#` outright, so the deploy step fails the
+PR check even though the build succeeded. And the recovery is worse than the
+failure — renaming a branch on GitHub **closes its open PR** instead of
+retargeting it, losing the PR number, description and review history.
+
 Be sure to update `CHANGELOG.md` and version numbers as appropriate when merging feature or fix branches.
 
 ### Version Bumping

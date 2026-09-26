@@ -277,7 +277,9 @@ Wait for user approval before proceeding.
 
 ### 5. Implement
 
-- Create a feature branch: `git checkout -b fix/#123-short-description` or `feat/#123-...`
+- Create a feature branch: `git checkout -b fix/123-short-description` or `feat/123-...`
+  — **no `#` in the branch name**; it breaks preview deploys, and renaming later
+  closes the open PR. See Branch Naming Conventions in CLAUDE.md.
 - Make changes following project conventions
 - Write or update tests for changed code
 
@@ -335,8 +337,8 @@ When an epic is detected, the workflow changes: one branch holds all sub-ticket 
 ### 1. Setup Epic Branch
 
 ```bash
-# Create a single branch for the entire epic
-git checkout -b feat/#48-epic-short-description
+# Create a single branch for the entire epic (no '#' — it breaks preview deploys)
+git checkout -b feat/48-epic-short-description
 ```
 
 ### 2. Identify Sub-Tickets
@@ -376,7 +378,7 @@ For each sub-ticket on the **same branch**:
    ```
 6. **Close sub-ticket** — Comment and close:
    ```bash
-   gh issue close #62 -c "Implemented in epic branch feat/#48-..., commit <sha>"
+   gh issue close #62 -c "Implemented in epic branch feat/48-..., commit <sha>"
    ```
 7. **Report progress** — Show what's done vs remaining:
    ```
@@ -394,7 +396,7 @@ For each sub-ticket on the **same branch**:
 After all sub-tickets are done (or user decides to stop):
 
 1. **Run full test suite** — All tests must pass
-2. **Push the epic branch** — `git push -u origin feat/#48-...`
+2. **Push the epic branch** — `git push -u origin feat/48-...`
 3. **Create one PR** referencing all sub-issues:
    ```
    gh pr create --title "feat: Grounded C4 Architecture Modeling System" --body "
