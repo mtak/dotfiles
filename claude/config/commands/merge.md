@@ -1,7 +1,7 @@
 ---
 model: haiku
 ---
-Merge a GitHub PR after review findings have already been documented and fixed.
+Merge a PR/MR (GitHub, GitLab or Azure DevOps) after review findings have already been documented and fixed.
 
 Assumes the workflow: `/pr` (document) → `/fix` (fix findings) → `/merge` (this).
 
@@ -12,6 +12,22 @@ Assumes the workflow: `/pr` (document) → `/fix` (fix findings) → `/merge` (t
 /merge #123         Merge specific PR by number
 /merge --dry-run    Show what would happen without merging
 ```
+
+## Forge & Tracker
+
+Detect the forge, `$BASE` and the tracker exactly as in `/pr` ([Forge & Tracker Detection](pr.md#forge--tracker-detection)). Use `$BASE` wherever this command says `main`. On GitLab and Azure DevOps, substitute:
+
+| Step | GitLab | Azure DevOps |
+|------|--------|--------------|
+| Identify | `glab mr view [N] -F json` | `az repos pr show --id N -o json` (current branch: `az repos pr list --detect true --source-branch "$BRANCH" --status active`) |
+| Pre-flight | `detailed_merge_status` must be `mergeable`; also `draft`, `sha` | `isDraft` false, `mergeStatus` `succeeded`; `az repos pr reviewer list --id N` — another reviewer has `vote` ≥ 5; `az repos pr policy list --id N` — every blocking policy `approved` |
+| Not approved yet | Stop; offer `glab mr merge N --auto-merge --yes` | Stop; offer `az repos pr update --id N --auto-complete true --delete-source-branch true` |
+| Merge | `glab mr merge N --sha <sha> --remove-source-branch --yes` | `az repos pr update --id N --status completed --delete-source-branch true` |
+
+- GitLab `detailed_merge_status` values like `not_approved`, `ci_still_running`, `discussions_not_resolved` or `draft_status` explain why it isn't mergeable — report the value as-is.
+- `--sha` pins the merge to the reviewed head commit; if someone pushed since, the merge fails — report it, don't retry.
+- Azure DevOps votes: `10` approved, `5` approved with suggestions, `0` no vote, `-5` waiting for author, `-10` rejected. Your own vote never counts.
+- **Skip step 3 (rebase + release commit) on GitLab and Azure DevOps.** Pushing after approval resets approvals, and the client owns its release process. The forge merges exactly what was reviewed.
 
 ## Process
 
@@ -143,9 +159,11 @@ gh pr view $PR --json body,commits --jq '
 
 Warn if no linked issues found.
 
+With `tracker: jira`, collect `<KEY>-N` references from the PR title, body and branch name instead.
+
 ### 5. Merge the PR
 
-Always use the GitHub API — `gh pr merge` fails with worktrees:
+On GitHub, always use the GitHub API — `gh pr merge` fails with worktrees (GitLab / Azure DevOps: use the Merge command from the table):
 
 ```bash
 REPO=$(gh repo view --json nameWithOwner -q .nameWithOwner)
@@ -197,6 +215,13 @@ If an issue is still open, offer to close it manually:
 
 ```bash
 gh issue close $ISSUE --reason completed --comment "Closed via PR #$PR"
+```
+
+**Jira:** do not transition or close anything. The issue stays in the `review` status (e.g. `Acceptatie`) until the user accepts it. End with a reminder:
+
+```
+⏰ <KEY>-123 is in Acceptatie — move it to Done once accepted:
+   acli jira workitem transition --key <KEY>-123 --status "Done"
 ```
 
 ## Output
@@ -254,6 +279,7 @@ No changes made. Run without --dry-run to execute.
 
 - Never merges draft PRs
 - Never merges with failing required checks
+- Never approves PRs, never uses `--bypass-policy`, never merges without another reviewer's approval where required
 - Never merges with unresolved conflicts
 - Never force-deletes unmerged local branches
 - Always confirms before proceeding
