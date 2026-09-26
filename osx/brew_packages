@@ -2,6 +2,7 @@
 # Copyright 2026 Ilja Heitlager
 # SPDX-License-Identifier: Apache-2.0
 
+exit 0
 
 # brew installer helper, normally run this from 'dot'
 TMPPATH=$PATH

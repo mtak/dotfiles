@@ -1,4 +1,4 @@
-# iheitlager does dotfiles
+# mtak does dotfiles
 
 ## dotfiles
 
@@ -17,7 +17,7 @@ This dotfile system is basic scripting with some topical modularization, no fanc
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # Clone and bootstrap
-git clone git@github.com:iheitlager/dotfiles.git ~/.dotfiles
+git clone git@github.com:mtak/dotfiles.git ~/.dotfiles
 ~/.dotfiles/script/bootstrap    # Configure dotfiles (run once)
 dot                             # Install/upgrade packages
 ```
@@ -102,5 +102,6 @@ Never commit secrets! Use `~/.config/secrets` (sourced by .bash_profile, exclude
 Git credentials go in `~/.config/git/local`.
 
 ## Credits
-- Main inspiration: https://github.com/holman/dotfiles
+- Main inspiration: https://github.com/iheitlager/dotfiles
+- Their inspiration: https://github.com/holman/dotfiles
 - Dotfiles community: https://dotfiles.github.io/

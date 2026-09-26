@@ -92,7 +92,10 @@
       "Bash(*wget*--post*)",
       "Bash(nc:*)",
       "Bash(ncat:*)",
-      "Bash(printenv:*)"
+      "Bash(printenv:*)",
+      "Bash(*/.kube/*)",
+      "Bash(*kube/config*)",
+      "Bash(*/.azure/*)"
     ],
     "defaultMode": "auto"
   },
