@@ -46,7 +46,7 @@ Optional: add the brew packages to `claude/brew_packages` once the setup is prov
 | [ ] | Client `.envrc` in `~/work/<client>/` | Export `AZURE_DEVOPS_EXT_PAT`, `GITLAB_HOST`, etc. from keychain; keep out of dotfiles |
 | [x] | Verify each CLI | `acli jira workitem view <KEY-1>`, `glab mr list`, `az repos pr list` |
 | [~] | Run `/harden` | Re-run 2026-09-26 after login: PASS, but audit doesn't model Read tool, `gh`/`git push` sends, `echo $VAR`, or glab/acli token stores (see /harden tickets). acli token location unknown |
-| [ ] | Decide attribution on Jira / MR comments | Check client policy on AI-generated content |
+| [x] | Decide attribution on Jira / MR comments | `/review` posts findings automatically on GitLab/ADO too, signed `🤖 Analysis by Claude` |
 
 ## 3. Per-repo config
 
@@ -96,7 +96,7 @@ Forge detection from `origin`:
 |---|---|---|
 | [~] | `/take` | Written 2026-09-26, read-only queries verified; needs a real run on an issue. Jira fetch, assign + transition to In Progress, Jira-key branch names, Epic Mode via parent/child |
 | [~] | `/pr` | Written 2026-09-26 (forge detection, default base branch, `review` transition after confirmation); flags verified via `--help`, needs a real run on GitLab and ADO. `glab mr create` / `az repos pr create`; Jira key in title; transition to In Review |
-| [ ] | `/review` | Fetch MR/PR diff via `glab` / `az repos` |
-| [ ] | `/merge` | Remind user to move the Jira issue from `Acceptatie` to `Done`. GitLab: `glab mr merge`; ADO: check approvals, auto-complete only |
+| [~] | `/review` | Written 2026-09-26 (glab diff/note; ADO diff via local git, comment via `az devops invoke` pullRequestThreads); needs a real run. Fetch MR/PR diff via `glab` / `az repos` |
+| [~] | `/merge` | Written 2026-09-26 (per-forge pre-flight, auto-merge/auto-complete when not approved, no release commit on GitLab/ADO, Jira Done reminder); needs a real run. Remind user to move the Jira issue from `Acceptatie` to `Done`. GitLab: `glab mr merge`; ADO: check approvals, auto-complete only |
 | [ ] | `/issue` | List/create Jira work items via JQL |
 | [ ] | `/purge` | Remote branch cleanup on GitLab / ADO |

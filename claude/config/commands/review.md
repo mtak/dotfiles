@@ -14,6 +14,14 @@ this step generates the findings that get documented in the PR.
 
 **Aspects:** `code` `security` `tests` `docs` `types` `simplify` `all` (default)
 
+Works on GitHub, GitLab and Azure DevOps, with GitHub or Jira issues. Detect the forge, `$BASE` and the tracker exactly as in `/pr` ([Forge & Tracker Detection](pr.md#forge--tracker-detection)), then substitute the commands below.
+
+| Step | GitHub | GitLab | Azure DevOps |
+|------|--------|--------|--------------|
+| PR metadata | `gh pr view [N] --json …` | `glab mr view [N] -F json` | `az repos pr show --id N -o json` (current branch: `az repos pr list --detect true --source-branch "$BRANCH" --status active`) |
+| Diff | `gh pr diff N` | `glab mr diff N --color=never` | No CLI diff: `git fetch origin` then `git diff origin/$TARGET...origin/$SOURCE` (branch names from `sourceRefName` / `targetRefName`, strip `refs/heads/`) |
+| Post findings | `gh pr comment N --body …` | `glab mr note create N -m "$FINDINGS"` | `az devops invoke` on `pullRequestThreads` (see step 7) |
+
 ---
 
 ## Process
@@ -55,6 +63,13 @@ Issue #42: Add OAuth login support
 
 Issue #51: Fix token refresh on expiry
   ...
+```
+
+With `tracker: jira`, extract `<KEY>-N` references from the PR title, body and branch name instead, and fetch each with:
+
+```bash
+acli jira workitem view <KEY>-N
+acli jira workitem comment list --key <KEY>-N
 ```
 
 If no issues are linked, note "No linked issues found" and proceed.
@@ -111,8 +126,8 @@ Agent tool:
     Review PR #$PR: $TITLE
 
     Constraints:
-    - The diff below is complete and final — do NOT run `gh pr diff`, `gh pr view`, or any other
-      `gh` command to re-fetch it.
+    - The diff below is complete and final — do NOT run `gh`, `glab`, `az` or `acli` commands
+      to re-fetch it.
     - Do NOT run tests, builds, linters, or install dependencies. Do NOT explore the repo beyond
       what's needed to understand the lines actually changed (e.g. checking a call site or an
       imported type). This is a read-only review of the diff below, not a build/test pass.
@@ -218,6 +233,24 @@ gh pr comment $PR --body "$(cat <<'EOF'
 🤖 *Analysis by Claude*
 EOF
 )"
+```
+
+**GitLab:** `glab mr note create $PR -m "$FINDINGS"` (same body, same signature).
+
+**Azure DevOps** has no CLI command for PR comments; post a thread via the REST API using the existing `az` login:
+
+```bash
+PR_JSON=$(az repos pr show --id $PR -o json)
+PROJECT=$(jq -r .repository.project.name <<<"$PR_JSON")
+REPO_ID=$(jq -r .repository.id <<<"$PR_JSON")
+
+THREAD=$(mktemp)   # never write this into the repo
+jq -n --arg c "$FINDINGS" '{comments: [{parentCommentId: 0, content: $c, commentType: 1}], status: 1}' > "$THREAD"
+
+az devops invoke --area git --resource pullRequestThreads \
+  --route-parameters project="$PROJECT" repositoryId="$REPO_ID" pullRequestId=$PR \
+  --http-method POST --in-file "$THREAD" --api-version 7.1 -o none
+rm "$THREAD"
 ```
 
 If the PR doesn't exist yet (no open PR for the branch), skip this step and note that findings
