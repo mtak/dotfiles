@@ -74,7 +74,7 @@ Forge detection from `origin`:
 | [x] | Confirm `CLAUDE.local.md` as config location (vs committed `.claude/workflow.md`) |
 | [x] | Confirm Jira transition names used by the client's project — `To Do`, `In Progress`, `waiting`, `Acceptatie`, `Done` (exact casing; also `Refinement status`, `Won't Do`). `/take` uses `start="In Progress"` |
 | [x] | `/pr` moves the issue to `Acceptatie` (`review="Acceptatie"`) |
-| [ ] | Decide which status (if any) to move to after merge |
+| [x] | After merge: issue stays in `Acceptatie`; user moves it to `Done` manually. `/merge` must remind the user |
 | [x] | Check `CLAUDE.local.md` is gitignored in each client repo before adding it (user handles per repo) |
 
 ## 4. Known constraints
@@ -95,8 +95,8 @@ Forge detection from `origin`:
 | Status | Command | Changes |
 |---|---|---|
 | [~] | `/take` | Written 2026-09-26, read-only queries verified; needs a real run on an issue. Jira fetch, assign + transition to In Progress, Jira-key branch names, Epic Mode via parent/child |
-| [ ] | `/pr` | `glab mr create` / `az repos pr create`; Jira key in title; transition to In Review |
+| [~] | `/pr` | Written 2026-09-26 (forge detection, default base branch, `review` transition after confirmation); flags verified via `--help`, needs a real run on GitLab and ADO. `glab mr create` / `az repos pr create`; Jira key in title; transition to In Review |
 | [ ] | `/review` | Fetch MR/PR diff via `glab` / `az repos` |
-| [ ] | `/merge` | GitLab: `glab mr merge`; ADO: check approvals, auto-complete only |
+| [ ] | `/merge` | Remind user to move the Jira issue from `Acceptatie` to `Done`. GitLab: `glab mr merge`; ADO: check approvals, auto-complete only |
 | [ ] | `/issue` | List/create Jira work items via JQL |
 | [ ] | `/purge` | Remote branch cleanup on GitLab / ADO |
