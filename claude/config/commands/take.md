@@ -1,11 +1,14 @@
-Take ownership of a GitHub issue and begin implementation.
+Take ownership of a GitHub or Jira issue and begin implementation.
 
 ## Usage
 
 ```
-/take #123  Take and implement directly
-/take       Show suggested issues to take
+/take #123         Take and implement directly (GitHub)
+/take ABC-123      Take and implement directly (Jira)
+/take              Show suggested issues to take
 ```
+
+The tracker is chosen per repo — see [Tracker Detection](#tracker-detection).
 
 **Epic detection:** If the issue has the `epic` label or links to sub-issues, `/take` automatically enters Epic Mode — one branch, one PR, one commit per sub-ticket.
 
@@ -72,6 +75,24 @@ git rebase origin/main
     git rebase --abort   # Cancel and keep your changes
     git rebase --continue # After fixing conflicts
 ```
+
+---
+
+## Tracker Detection
+
+Read the `## Workflow` block from the repo's `CLAUDE.local.md` (personal, not committed):
+
+```markdown
+## Workflow
+- tracker: jira
+- jira-project: ABC
+- transitions: start="In Progress", review="Acceptatie"
+```
+
+- **No block, or `tracker: github`** → GitHub; follow the process below as written.
+- **`tracker: jira`** → follow the process below, substituting the commands in [Jira Tracker](#jira-tracker).
+
+An argument like `ABC-123` without a Jira block is a config error: stop and ask the user to add the block.
 
 ---
 
@@ -430,6 +451,27 @@ When `/take #N` is called and you're already on an epic branch:
 1. Check if `#N` is a sub-ticket of the current epic — if yes, continue on this branch
 2. If `#N` is a different issue — warn and offer to switch or finish current epic first
 
+## Jira Tracker
+
+When `tracker: jira`, the process is the same; only the commands and naming change. `<jira-project>` comes from the `## Workflow` block; `<KEY>` is that project's issue key prefix. `acli` is already authenticated against the Jira Cloud site.
+
+| Step | GitHub | Jira |
+|------|--------|------|
+| Suggest issues | `gh issue list` | `acli jira workitem search --jql "project = <jira-project> AND statusCategory != Done AND (assignee = currentUser() OR assignee is EMPTY) ORDER BY updated DESC" --limit 20` |
+| Fetch issue | `gh issue view #N` | `acli jira workitem view <KEY>-N` (readable) and `--json` for fields; comments: `acli jira workitem comment list --key <KEY>-N` |
+| Claim issue | — | After plan approval: `acli jira workitem assign --key <KEY>-N --assignee "@me"` and `acli jira workitem transition --key <KEY>-N --status "<start>" --yes` |
+| Branch | `feat/123-desc` | `feat/<KEY>-123-desc` — uppercase key, no `#`; Jira links branches and commits by key |
+| Commit ref | `(#123)` | `(<KEY>-123)` |
+| Epic detection | `epic` label or task list | `.fields.issuetype.name == "Epic"` in `--json` output |
+| Sub-tickets | task list / `gh issue list --search` | `acli jira workitem search --jql "parent = <KEY>-N ORDER BY rank"` |
+| Close sub-ticket | `gh issue close` | Do **not** transition — work isn't merged yet. Status moves happen in `/pr` and after merge |
+
+Notes:
+- Descriptions come back as ADF (JSON) in `--json`; read the prose from the plain `view` output. Issues may be written in Dutch.
+- Only the `start` transition is used by `/take`. Transition names are exact and case-sensitive (e.g. `In Progress`, not `in progress`).
+- Assigning, transitioning and commenting are visible to the whole team: do them only after the user approves the plan, and ask before posting any Jira comment.
+- Code lives in GitLab or Azure DevOps, not GitHub; point to `/pr` for opening the PR/MR instead of `gh pr create`.
+
 ## Philosophy
 
 From the tldraw blog: "If writing the code is the easy part, why would I want someone else to write it?"
@@ -448,7 +490,7 @@ The value of `/take` is not the code—it's the **judgment**:
 After taking an issue, provide:
 - Summary of changes made
 - Any open questions or follow-ups
-- Command to create PR: `gh pr create --title "..." --body "Closes #123"`
+- Command to create PR: `gh pr create --title "..." --body "Closes #123"` (Jira: run `/pr`)
 
 ---
 
